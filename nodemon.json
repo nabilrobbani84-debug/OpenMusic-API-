@@ -1,0 +1,12 @@
+{
+  "restartable": "rs",
+  "ignore": [
+    "node_modules",
+    "public",
+    "dist"
+  ],
+  "watch": [
+    "src/"
+  ],
+  "ext": "js,json"
+}
