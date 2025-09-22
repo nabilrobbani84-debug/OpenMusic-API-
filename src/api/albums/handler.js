@@ -1,4 +1,5 @@
-const autoBind = require('auto-bind');
+// src/api/albums/handler.js
+import autoBind from 'auto-bind';
 
 class AlbumsHandler {
   constructor(service, validator) {
@@ -58,4 +59,4 @@ class AlbumsHandler {
   }
 }
 
-module.exports = AlbumsHandler;
+export default AlbumsHandler;

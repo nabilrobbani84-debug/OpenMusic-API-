@@ -1,12 +1,12 @@
 // src/api/albums/index.js
 
 // Impor AlbumsHandler dari file handler.js
-const AlbumsHandler = require('./handler');
+import AlbumsHandler from './handler.js';
 
 // Impor routes dari file routes.js
-const routes = require('./routes');
+import routes from './routes.js';
 
-module.exports = {
+const albumsPlugin = {
   name: 'albums',
   version: '1.0.0',
   register: async (server, { service, validator }) => {
@@ -17,3 +17,5 @@ module.exports = {
     server.route(routes(albumsHandler));
   },
 };
+
+export default albumsPlugin;

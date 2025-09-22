@@ -1,5 +1,4 @@
-// Fungsi ini menerima objek handler sebagai parameter, yang akan digunakan
-// untuk menghubungkan setiap rute dengan logika bisnis yang sesuai.
+// src/api/songs/routes.js
 const routes = (handler) => [
   {
     // Rute untuk menambahkan lagu baru
@@ -33,4 +32,4 @@ const routes = (handler) => [
   },
 ];
 
-module.exports = routes;
+export default routes;

@@ -1,3 +1,4 @@
+// src/api/albums/routes.js
 const routes = (handler) => [
   {
     method: 'POST',
@@ -26,4 +27,4 @@ const routes = (handler) => [
   },
 ];
 
-module.exports = routes;
+export default routes;

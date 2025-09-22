@@ -1,60 +1,74 @@
-const autoBind = require('auto-bind');
+// src/services/AlbumsService.js
+import { nanoid } from 'nanoid';
+import pg from 'pg';
+import InvariantError from '../exceptions/InvariantError.js';
+import NotFoundError from '../exceptions/NotFoundError.js';
 
-class AlbumsHandler {
-  constructor(service, validator) {
-    this._service = service;
-    this._validator = validator;
-    autoBind(this);
+class AlbumsService {
+  constructor() {
+    this._pool = new pg.Pool();
   }
 
-  async postAlbumHandler(request, h) {
-    this._validator.validateAlbumPayload(request.payload);
-    const { name, year } = request.payload;
-    const albumId = await this._service.addAlbum({ name, year });
-    const response = h.response({
-      status: 'success',
-      data: { albumId },
-    });
-    response.code(201);
-    return response;
-  }
-
-  // Add this new method
-  async getAlbumsHandler() {
-      const albums = await this._service.getAlbums();
-      return {
-          status: 'success',
-          data: { albums },
-      };
-  }
-
-  async getAlbumByIdHandler(request, h) {
-    const { id } = request.params;
-    const album = await this._service.getAlbumById(id);
-    return {
-      status: 'success',
-      data: { album },
+  async addAlbum({ name, year }) {
+    const id = `album-${nanoid(16)}`;
+    const query = {
+      text: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',
+      values: [id, name, year],
     };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows[0].id) {
+      throw new InvariantError('Album gagal ditambahkan');
+    }
+
+    return result.rows[0].id;
   }
 
-  async putAlbumByIdHandler(request, h) {
-    this._validator.validateAlbumPayload(request.payload);
-    const { id } = request.params;
-    await this._service.editAlbumById(id, request.payload);
-    return {
-      status: 'success',
-      message: 'Album berhasil diperbarui',
-    };
+  async getAlbums() {
+    const result = await this._pool.query('SELECT id, name, year FROM albums');
+    return result.rows;
   }
 
-  async deleteAlbumByIdHandler(request, h) {
-    const { id } = request.params;
-    await this._service.deleteAlbumById(id);
-    return {
-      status: 'success',
-      message: 'Album berhasil dihapus',
+  async getAlbumById(id) {
+    const query = {
+      text: 'SELECT id, name, year FROM albums WHERE id = $1',
+      values: [id],
     };
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new NotFoundError('Album tidak ditemukan');
+    }
+
+    return result.rows[0];
+  }
+
+  async editAlbumById(id, { name, year }) {
+    const query = {
+      text: 'UPDATE albums SET name = $1, year = $2 WHERE id = $3 RETURNING id',
+      values: [name, year, id],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new NotFoundError('Gagal memperbarui album. Id tidak ditemukan');
+    }
+  }
+
+  async deleteAlbumById(id) {
+    const query = {
+      text: 'DELETE FROM albums WHERE id = $1 RETURNING id',
+      values: [id],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan');
+    }
   }
 }
 
-module.exports = AlbumsHandler;
+export default AlbumsService;

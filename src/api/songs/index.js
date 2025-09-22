@@ -1,19 +1,14 @@
 // src/api/songs/index.js
+import SongsHandler from './handler.js';
+import routes from './routes.js';
 
-// Import SongsHandler from file handler.js
-const SongsHandler = require('./handler');
-
-// Import routes from file routes.js
-const routes = require('./routes');
-
-module.exports = {
+const songsPlugin = {
   name: 'songs',
   version: '1.0.0',
   register: async (server, { service, validator }) => {
-    // Create instance of SongsHandler with injected service and validator
     const songsHandler = new SongsHandler(service, validator);
-
-    // Register all routes returned by the routes function
     server.route(routes(songsHandler));
   },
 };
+
+export default songsPlugin;

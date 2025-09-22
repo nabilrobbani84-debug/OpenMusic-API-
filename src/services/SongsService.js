@@ -1,11 +1,11 @@
-const { nanoid } = require('nanoid');
-const { Pool } = require('pg');
-const InvariantError = require('../exceptions/InvariantError');
-const NotFoundError = require('../exceptions/NotFoundError');
+import { nanoid } from 'nanoid';
+import pg from 'pg'; // atau 'import { Pool } from 'pg';' jika Anda lebih suka
+import InvariantError from '../exceptions/InvariantError.js';
+import NotFoundError from '../exceptions/NotFoundError.js';
 
 class SongsService {
   constructor() {
-    this._pool = new Pool();
+    this._pool = new pg.Pool(); // Menggunakan pg.Pool() jika mengimpor pg secara default
   }
 
   async addSong({ title, year, performer, genre, duration, albumId }) {
@@ -37,12 +37,12 @@ class SongsService {
     }
 
     if (conditions.length > 0) {
-        queryText += ' WHERE ' + conditions.join(' AND ');
+      queryText += ' WHERE ' + conditions.join(' AND ');
     }
 
     const result = await this._pool.query({
-        text: queryText,
-        values: queryValues
+      text: queryText,
+      values: queryValues
     });
     return result.rows;
   }
@@ -83,4 +83,4 @@ class SongsService {
   }
 }
 
-module.exports = SongsService;
+export default SongsService;
