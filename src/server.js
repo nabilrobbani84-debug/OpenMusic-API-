@@ -67,14 +67,13 @@ const init = async () => {
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
 
-  // host fallback: gunakan env.HOST kalau ada, kalau tidak fallback ke IPv4
   const envHost = process.env.HOST;
   const hosts = envHost
     ? [envHost]
     : ['127.0.0.1', 'localhost', '::1', '0.0.0.0'];
 
   const startPort = Number(process.env.PORT) || 5000;
-  const maxPortOffset = 20; // coba sampai 20 port berikutnya
+  const maxPortOffset = 20;
 
   for (const host of hosts) {
     for (let offset = 0; offset <= maxPortOffset; offset++) {
@@ -86,7 +85,6 @@ const init = async () => {
 
         console.log(`✅ Server berjalan pada ${server.info.uri}`);
 
-        // graceful shutdown
         const shutdown = async () => {
           console.log('🛑 Stopping server...');
           try {
@@ -101,7 +99,7 @@ const init = async () => {
         process.on('SIGINT', shutdown);
         process.on('SIGTERM', shutdown);
 
-        return; // sukses start, langsung keluar loop
+        return;
       } catch (err) {
         try {
           await server.stop({ timeout: 0 });
