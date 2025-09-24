@@ -72,7 +72,7 @@ const init = async () => {
     ? [envHost]
     : ['127.0.0.1', 'localhost', '::1', '0.0.0.0'];
 
-  const startPort = Number(process.env.PORT) || 5000;
+  const startPort = Number(process.env.PORT) || 5001;
   const maxPortOffset = 20;
 
   for (const host of hosts) {
