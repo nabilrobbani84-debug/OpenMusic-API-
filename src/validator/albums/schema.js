@@ -1,6 +1,12 @@
+// src/validator/albums/schema.js
+
 import Joi from 'joi';
 
-export const AlbumPayloadSchema = Joi.object({
-  name: Joi.string().max(50).required(),
+const AlbumPayloadSchema = Joi.object({
+  // Sesuaikan properti-properti di sini
+  name: Joi.string().required(),
   year: Joi.number().integer().min(1900).max(new Date().getFullYear()).required(),
 });
+
+// Perbaikan: Menggunakan Named Export
+export { AlbumPayloadSchema };

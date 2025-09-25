@@ -8,6 +8,7 @@ class SongsHandler {
     this._service = service;
     this._validator = validator;
 
+    this.postSongHandler = this.postSongHandler.bind(this);
     autoBind(this);
   }
 

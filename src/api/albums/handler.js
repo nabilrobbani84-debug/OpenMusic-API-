@@ -8,7 +8,7 @@ class AlbumsHandler {
     this._service = service;
     this._validator = validator;
 
-    autoBind(this);
+    autoBind(this); 
   }
 
   async postAlbumHandler(request, h) {
