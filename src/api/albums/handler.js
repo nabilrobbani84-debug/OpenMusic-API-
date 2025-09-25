@@ -13,17 +13,22 @@ class AlbumsHandler {
 
   async postAlbumHandler(request, h) {
     try {
+      // pastikan payload ada
+      if (!request.payload) {
+        throw new InvariantError('Payload tidak boleh kosong');
+      }
+
       this._validator.validateAlbumPayload(request.payload);
       const { name, year } = request.payload;
+
       const albumId = await this._service.addAlbum({ name, year });
       const response = h.response({
         status: 'success',
-        data: {
-          albumId,
-        },
+        data: { albumId },
       });
       response.code(201);
       return response;
+
     } catch (error) {
       if (error instanceof InvariantError) {
         const response = h.response({
@@ -33,7 +38,6 @@ class AlbumsHandler {
         response.code(400);
         return response;
       }
-      // Handle server errors
       const response = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',
@@ -45,7 +49,7 @@ class AlbumsHandler {
   }
 
   async getAlbumsHandler() {
-    const albums = await this._service.getAlbums();
+    const albums = await this._service.getAlbums() || [];
     return {
       status: 'success',
       data: {
