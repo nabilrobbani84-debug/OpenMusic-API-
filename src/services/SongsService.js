@@ -23,29 +23,28 @@ class SongsService {
   }
   
   async getSongs({ title, performer }) {
-    let queryText = 'SELECT id, title, performer FROM songs';
-    const queryValues = [];
-    const conditions = [];
-    
-    if (title) {
-        conditions.push(`title ILIKE '%' || $${conditions.length + 1} || '%'`);
-        queryValues.push(title);
-    }
-    if (performer) {
-        conditions.push(`performer ILIKE '%' || $${conditions.length + 1} || '%'`);
-        queryValues.push(performer);
-    }
+  let query = 'SELECT id, title, performer FROM songs';
+  const values = [];
+  const conditions = [];
 
-    if (conditions.length > 0) {
-      queryText += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    const result = await this._pool.query({
-      text: queryText,
-      values: queryValues
-    });
-    return result.rows;
+  if (title) {
+    conditions.push(`LOWER(title) LIKE $${values.length + 1}`);
+    values.push(`%${title.toLowerCase()}%`);
   }
+  if (performer) {
+    conditions.push(`LOWER(performer) LIKE $${values.length + 1}`);
+    values.push(`%${performer.toLowerCase()}%`);
+  }
+
+  if (conditions.length > 0) {
+    query += ` WHERE ${conditions.join(' AND ')}`;
+  }
+  
+  query += ' ORDER BY id ASC'; // Optional: Sorting for consistent results
+
+  const result = await this._pool.query(query, values);
+  return result.rows;
+}
 
   async getSongById(id) {
     const query = {

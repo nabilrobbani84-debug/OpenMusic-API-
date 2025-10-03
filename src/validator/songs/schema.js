@@ -1,15 +1,19 @@
-// src/validator/songs/schema.js (Contoh Perbaikan)
+// src/validator/songs/schema.js
 import Joi from 'joi';
 
 const SongPayloadSchema = Joi.object({
-  // WAJIB menggunakan .required() untuk properti yang harus ada.
-  // Jika tidak ada, Joi akan gagal validasi sebelum kode Anda mencoba mengaksesnya.
-  title: Joi.string().required(), 
+  title: Joi.string().required(),
+  // Detail: Year harus angka, integer, minimal tahun 1900, dan maksimal tahun sekarang.
   year: Joi.number().integer().min(1900).max(new Date().getFullYear()).required(),
   genre: Joi.string().required(),
   performer: Joi.string().required(),
-  duration: Joi.number().default(0), // Gunakan .default(0) jika durasi bisa null/undefined.
-  albumId: Joi.string().optional(), // Gunakan .optional() jika albumId boleh tidak ada.
+  
+  // Detail: duration harus angka, integer, dan bersifat opsional (tidak ada .required())
+  // Gunakan .optional() atau cukup hilangkan .required()
+  duration: Joi.number().integer().optional(), 
+  
+  // Detail: albumId harus berupa string dan bersifat opsional.
+  albumId: Joi.string().optional(),
 });
 
 export { SongPayloadSchema };

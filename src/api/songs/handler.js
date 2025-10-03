@@ -8,7 +8,7 @@ class SongsHandler {
     this._service = service;
     this._validator = validator;
 
-    this.postSongHandler = this.postSongHandler.bind(this);
+    // Note: this.postSongHandler = this.postSongHandler.bind(this); is redundant when using autoBind(this)
     autoBind(this);
   }
 
@@ -74,6 +74,15 @@ class SongsHandler {
         response.code(404);
         return response;
       }
+      
+      // Menambahkan penanganan untuk Internal Server Error (500) yang hilang
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
     }
   }
 
@@ -95,6 +104,25 @@ class SongsHandler {
         response.code(400);
         return response;
       }
+      
+      // 👇 PERBAIKAN DITAMBAHKAN DI SINI: Menangani NotFoundError
+      if (error instanceof NotFoundError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        response.code(404);
+        return response;
+      }
+      
+      // Menambahkan penanganan untuk Internal Server Error (500)
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
     }
   }
 
@@ -115,6 +143,15 @@ class SongsHandler {
         response.code(404);
         return response;
       }
+      
+      // Menambahkan penanganan untuk Internal Server Error (500) yang hilang
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
     }
   }
 }

@@ -31,17 +31,31 @@ class AlbumsService {
   }
 
   async getAlbumById(id) {
-    const query = {
+    // 1. Ambil detail album
+    const albumQuery = {
       text: 'SELECT id, name, year FROM albums WHERE id = $1',
       values: [id],
     };
-    const result = await this._pool.query(query);
+    const albumResult = await this._pool.query(albumQuery);
 
-    if (!result.rows.length) {
-      throw new NotFoundError('Album tidak ditemukan');
+    if (!albumResult.rows.length) {
+      throw new NotFoundError('Album tidak ditemukan'); 
     }
 
-    return result.rows[0];
+    const album = albumResult.rows[0];
+    
+    // 2. Ambil daftar lagu yang terkait dengan album ini (memperbaiki agar menggunakan 'album_id')
+    const songsQuery = {
+      text: 'SELECT id, title, performer FROM songs WHERE album_id = $1',
+      values: [id],
+    };
+    const songsResult = await this._pool.query(songsQuery);
+    
+    // 3. Gabungkan detail album dan daftar lagu
+    return {
+      ...album,
+      songs: songsResult.rows, // Memastikan properti songs adalah array
+    };
   }
 
   async editAlbumById(id, { name, year }) {

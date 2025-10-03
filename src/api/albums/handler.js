@@ -2,25 +2,25 @@
 import autoBind from 'auto-bind';
 import InvariantError from '../../exceptions/InvariantError.js';
 import NotFoundError from '../../exceptions/NotFoundError.js';
-
+ 
 class AlbumsHandler {
   constructor(service, validator) {
     this._service = service;
     this._validator = validator;
-
+ 
     autoBind(this); 
   }
-
+ 
   async postAlbumHandler(request, h) {
     try {
       // pastikan payload ada
       if (!request.payload) {
         throw new InvariantError('Payload tidak boleh kosong');
       }
-
+ 
       this._validator.validateAlbumPayload(request.payload);
       const { name, year } = request.payload;
-
+ 
       const albumId = await this._service.addAlbum({ name, year });
       const response = h.response({
         status: 'success',
@@ -28,7 +28,7 @@ class AlbumsHandler {
       });
       response.code(201);
       return response;
-
+ 
     } catch (error) {
       if (error instanceof InvariantError) {
         const response = h.response({
@@ -47,7 +47,7 @@ class AlbumsHandler {
       return response;
     }
   }
-
+ 
   async getAlbumsHandler() {
     const albums = await this._service.getAlbums() || [];
     return {
@@ -57,7 +57,7 @@ class AlbumsHandler {
       },
     };
   }
-
+ 
   async getAlbumByIdHandler(request, h) {
     try {
       const { id } = request.params;
@@ -77,9 +77,18 @@ class AlbumsHandler {
         response.code(404);
         return response;
       }
+      
+      // PERBAIKAN: Menambahkan penanganan generic error untuk mencegah 500 jika ada error database/unhandled
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
     }
   }
-
+ 
   async putAlbumByIdHandler(request, h) {
     try {
       this._validator.validateAlbumPayload(request.payload);
@@ -98,9 +107,27 @@ class AlbumsHandler {
         response.code(400);
         return response;
       }
+      // PERBAIKAN: Menangani NotFoundError untuk 404 (kasus ID tidak ditemukan)
+      if (error instanceof NotFoundError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        response.code(404);
+        return response;
+      }
+      
+      // PERBAIKAN: Menambahkan penanganan generic error untuk mencegah 500 jika ada error database/unhandled
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
     }
   }
-
+ 
   async deleteAlbumByIdHandler(request, h) {
     try {
       const { id } = request.params;
@@ -118,8 +145,17 @@ class AlbumsHandler {
         response.code(404);
         return response;
       }
+      
+      // PERBAIKAN: Menambahkan penanganan generic error untuk mencegah 500 jika ada error database/unhandled
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
     }
   }
 }
-
+ 
 export default AlbumsHandler;
