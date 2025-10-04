@@ -1,4 +1,5 @@
 // src/server.js
+import 'dotenv/config.js'; // Pastikan baris ini ada di paling atas
 import Hapi from '@hapi/hapi';
 import albums from './api/albums/index.js';
 import songs from './api/songs/index.js';
