@@ -1,88 +1,134 @@
-// src/services/AlbumsService.js
-import { nanoid } from 'nanoid';
-import pg from 'pg';
-import InvariantError from '../exceptions/InvariantError.js';
-import NotFoundError from '../exceptions/NotFoundError.js';
+// src/server.js
+import 'dotenv/config.js'; // <--- BARIS PERBAIKAN DITAMBAHKAN DI SINI
+import Hapi from '@hapi/hapi';
+import albums from './api/albums/index.js';
+import songs from './api/songs/index.js';
+import AlbumsService from './services/AlbumsService.js';
+import SongsService from './services/SongsService.js';
+import AlbumValidator from './validator/albums/index.js';
+import SongValidator from './validator/songs/index.js';
+import ClientError from './exceptions/ClientError.js';
 
-class AlbumsService {
-  constructor() {
-    this._pool = new pg.Pool();
-  }
+const createServerInstance = (host, port) => {
+  return Hapi.server({
+    host,
+    port,
+    routes: {
+      cors: {
+        origin: ['*'],
+      },
+    },
+  });
+};
 
-  async addAlbum({ name, year }) {
-    const id = `album-${nanoid(16)}`;
-    const query = {
-      text: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',
-      values: [id, name, year],
-    };
+const registerPluginsAndExtensions = async (server, albumsService, songsService) => {
+  await server.register([
+    {
+      plugin: albums,
+      options: {
+        service: albumsService,
+        validator: AlbumValidator,
+      },
+    },
+    {
+      plugin: songs,
+      options: {
+        service: songsService,
+        validator: SongValidator,
+      },
+    },
+  ]);
 
-    const result = await this._pool.query(query);
+  server.ext('onPreResponse', (request, h) => {
+    const { response } = request;
 
-    if (!result.rows[0].id) {
-      throw new InvariantError('Album gagal ditambahkan');
+    if (response instanceof ClientError) {
+      const newResponse = h.response({
+        status: 'fail',
+        message: response.message,
+      });
+      newResponse.code(response.statusCode);
+      return newResponse;
     }
 
-    return result.rows[0].id;
-  }
-
-  async getAlbums() {
-    const result = await this._pool.query('SELECT id, name, year FROM albums');
-    return result.rows;
-  }
-
-  async getAlbumById(id) {
-    // 1. Ambil detail album
-    const albumQuery = {
-      text: 'SELECT id, name, year FROM albums WHERE id = $1',
-      values: [id],
-    };
-    const albumResult = await this._pool.query(albumQuery);
-
-    if (!albumResult.rows.length) {
-      throw new NotFoundError('Album tidak ditemukan'); 
+    if (response && response.isServer) {
+      const newResponse = h.response({
+        status: 'error',
+        message: 'Terjadi kegagalan pada server kami',
+      });
+      newResponse.code(500);
+      return newResponse;
     }
 
-    const album = albumResult.rows[0];
-    
-    // 2. Ambil daftar lagu yang terkait dengan album ini (memperbaiki agar menggunakan 'album_id')
-    const songsQuery = {
-      text: 'SELECT id, title, performer FROM songs WHERE album_id = $1',
-      values: [id],
-    };
-    const songsResult = await this._pool.query(songsQuery);
-    
-    // 3. Gabungkan detail album dan daftar lagu
-    return {
-      ...album,
-      songs: songsResult.rows, // Memastikan properti songs adalah array
-    };
-  }
+    return h.continue;
+  });
+};
 
-  async editAlbumById(id, { name, year }) {
-    const query = {
-      text: 'UPDATE albums SET name = $1, year = $2 WHERE id = $3 RETURNING id',
-      values: [name, year, id],
-    };
+const init = async () => {
+  const albumsService = new AlbumsService();
+  const songsService = new SongsService();
 
-    const result = await this._pool.query(query);
+  const envHost = process.env.HOST; // Sekarang process.env.HOST akan berisi '0.0.0.0' dari .env
+  const hosts = envHost
+    ? [envHost]
+    : ['127.0.0.1', 'localhost', '::1', '0.0.0.0'];
 
-    if (!result.rows.length) {
-      throw new NotFoundError('Gagal memperbarui album. Id tidak ditemukan');
+  const startPort = Number(process.env.PORT) || 5001; // Sekarang process.env.PORT akan berisi 5001 dari .env
+  const maxPortOffset = 20;
+
+  for (const host of hosts) {
+    for (let offset = 0; offset <= maxPortOffset; offset++) {
+      const port = startPort + offset;
+      const server = createServerInstance(host, port);
+      try {
+        await registerPluginsAndExtensions(server, albumsService, songsService);
+        await server.start();
+
+        console.log(`✅ Server berjalan pada ${server.info.uri}`);
+
+        const shutdown = async () => {
+          console.log('🛑 Stopping server...');
+          try {
+            await server.stop({ timeout: 10000 });
+            console.log('✅ Server stopped.');
+            process.exit(0);
+          } catch (err) {
+            console.error('❌ Error when stopping server:', err);
+            process.exit(1);
+          }
+        };
+        process.on('SIGINT', shutdown);
+        process.on('SIGTERM', shutdown);
+
+        return;
+      } catch (err) {
+        try {
+          await server.stop({ timeout: 0 });
+        } catch (_) {
+          // ignore
+        }
+
+        if (err && (err.code === 'EACCES' || err.code === 'EADDRINUSE')) {
+          console.warn(
+            `⚠️  Gagal bind ${host}:${port} — ${err.code}. Mencoba kombinasi host/port lain...`
+          );
+          continue;
+        }
+
+        console.error('❌ Error saat memulai server:', err);
+        throw err;
+      }
     }
   }
 
-  async deleteAlbumById(id) {
-    const query = {
-      text: 'DELETE FROM albums WHERE id = $1 RETURNING id',
-      values: [id],
-    };
+  console.error('❌ Gagal memulai server setelah mencoba beberapa host dan port.');
+  console.error(
+    'Coba jalankan sebagai Administrator, atau ubah HOST ke 127.0.0.1, atau gunakan port lain.'
+  );
+  process.exit(1);
+};
 
-    const result = await this._pool.query(query);
-
-    if (!result.rows.length) {
-      throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan');
-    }
-  }
-}
-
-export default AlbumsService;
+init().catch((err) => {
+  console.error('❌ Inisialisasi server gagal:', err);
+  process.exit(1);
+});
