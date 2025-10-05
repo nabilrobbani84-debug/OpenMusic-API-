@@ -78,7 +78,7 @@ class AlbumsHandler {
         return response;
       }
       
-      // PERBAIKAN: Menambahkan penanganan generic error untuk mencegah 500 jika ada error database/unhandled
+      // Menambahkan penanganan generic error untuk mencegah 500 jika ada error database/unhandled
       const response = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',
@@ -100,22 +100,26 @@ class AlbumsHandler {
       };
     } catch (error) {
       if (error instanceof InvariantError) {
-        // ... (Mengembalikan 400 Bad Request)
+        // PERBAIKAN: Membuat objek response dan set 400
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        });
         response.code(400); 
         return response;
       }
-      // PERBAIKAN: Menangani NotFoundError untuk 404 (kasus ID tidak ditemukan)
+      
       if (error instanceof NotFoundError) {
         const response = h.response({
           status: 'fail',
           message: error.message,
         });
-        response.code(500);
-        console.error(error);
+        // PERBAIKAN: Menggunakan kode 404 (Not Found)
+        response.code(404);
         return response;
       }
       
-      // PERBAIKAN: Menambahkan penanganan generic error untuk mencegah 500 jika ada error database/unhandled
+      // Menambahkan penanganan generic error untuk 500
       const response = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',
@@ -144,7 +148,7 @@ class AlbumsHandler {
         return response;
       }
       
-      // PERBAIKAN: Menambahkan penanganan generic error untuk mencegah 500 jika ada error database/unhandled
+      // Menambahkan penanganan generic error untuk mencegah 500 jika ada error database/unhandled
       const response = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',
