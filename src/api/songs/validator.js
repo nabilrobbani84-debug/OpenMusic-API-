@@ -1,5 +1,7 @@
-const InvariantError = require('../../exceptions/InvariantError');
-const { SongPayloadSchema } = require('.');
+// src/api/songs/validator.js (Diperbaiki)
+import InvariantError from '../../exceptions/InvariantError.js';
+// Menggunakan named import dari schema.js yang sudah benar
+import { SongPayloadSchema } from '../../validator/songs/schema.js'; 
  
 const SongsValidator = {
   validateSongPayload: (payload) => {
@@ -11,4 +13,4 @@ const SongsValidator = {
   },
 };
  
-module.exports = SongsValidator;
+export default SongsValidator; 

@@ -1,17 +1,16 @@
-const InvariantError = require('../../exceptions/InvariantError');
-const { AlbumPayloadSchema } = require('.'); // Asumsi skema berada di file terpisah
+// src/api/albums/validator.js (Diperbaiki)
+import InvariantError from '../../exceptions/InvariantError.js';
+// Menggunakan named import dari schema.js yang sudah benar
+import { AlbumPayloadSchema } from '../../validator/albums/schema.js'; 
 
-const AlbumValidator = {
+const AlbumsValidator = {
   validateAlbumPayload(payload) {
-    const { name, year } = payload;
-
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      throw new InvariantError('Nama album harus diisi');
+    const validationResult = AlbumPayloadSchema.validate(payload);
+ 
+    if (validationResult.error) {
+      throw new InvariantError(validationResult.error.message);
     }
-    if (!year || typeof year !== 'number') {
-      throw new InvariantError('Tahun album harus berupa angka');
-    }
-  }
+  },
 };
-
-module.exports = AlbumValidator;
+ 
+export default AlbumsValidator; 
