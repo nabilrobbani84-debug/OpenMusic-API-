@@ -1,3 +1,4 @@
+// nabilrobbani84-debug/openmusic-api-/OpenMusic-API--ab944dbaeb9d0fd8c572bca07d36672053ff1850/migrations/1758125711432_create-songs-table.js (Modified)
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
@@ -36,6 +37,7 @@ export const up = (pgm) => {
     album_id: {
       type: 'VARCHAR(50)',
       references: 'albums',
+      onDelete: 'CASCADE', // PERUBAHAN: Tambah onDelete CASCADE
     },
   });
 };
