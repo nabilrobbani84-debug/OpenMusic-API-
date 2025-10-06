@@ -9,7 +9,7 @@ import users from './api/users/index.js';
 import authentications from './api/authentications/index.js';
 import playlists from './api/playlists/index.js';
 import collaborations from './api/collaborations/index.js'; 
- 
+ 
 // Impor services/utils/validators 
 import UsersService from './services/UsersService.js';
 import AuthenticationsService from './services/AuthenticationsService.js';
@@ -26,7 +26,7 @@ import SongsService from './services/SongsService.js';
 import AlbumValidator from './validator/albums/index.js';
 import SongValidator from './validator/songs/index.js';
 import ClientError from './exceptions/ClientError.js';
- 
+ 
 const createServerInstance = (host, port) => {
   return Hapi.server({
     host,
@@ -38,7 +38,7 @@ const createServerInstance = (host, port) => {
     },
   });
 };
- 
+ 
 const registerPluginsAndExtensions = async (server, albumsService, songsService) => {
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
@@ -54,7 +54,7 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
       plugin: Jwt,
     }
   ]);
- 
+ 
   // Definisikan JWT Authentication Strategy (Kriteria 1)
   server.auth.strategy('openmusic_jwt', 'jwt', {
     keys: process.env.ACCESS_TOKEN_KEY, // Kriteria 1: Menggunakan ACCESS_TOKEN_KEY
@@ -75,7 +75,7 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
       };
     },
   });
- 
+ 
   await server.register([
     {
       plugin: albums,
@@ -91,7 +91,7 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
         validator: SongValidator,
       },
     },
-    // Plugins baru
+    // Ditambahkan: Plugins baru
     {
       plugin: users,
       options: {
@@ -116,7 +116,7 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
         songsService: songsService, 
       },
     },
-    // Plugin untuk Kolaborasi
+    // Ditambahkan: Plugin untuk Kolaborasi (Kriteria Opsional 1)
     {
       plugin: collaborations,
       options: {
@@ -126,10 +126,10 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
       },
     },
   ]);
- 
+ 
   server.ext('onPreResponse', (request, h) => {
     const { response } = request;
- 
+ 
     // Client Error (4xx) (Kriteria 5)
     if (response instanceof ClientError) {
       const newResponse = h.response({
@@ -139,7 +139,7 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
       newResponse.code(response.statusCode);
       return newResponse;
     }
- 
+ 
     // Server Error (500) (Kriteria 5)
     if (response && response.isServer) {
       // Menambahkan logging error server untuk debugging
@@ -151,23 +151,23 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
       newResponse.code(500); // Menggunakan status code 500
       return newResponse;
     }
- 
+ 
     return h.continue;
   });
 };
- 
+ 
 const init = async () => {
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
- 
+ 
   const envHost = process.env.HOST;
   const hosts = envHost
     ? [envHost]
     : ['127.0.0.1', 'localhost', '::1', '0.0.0.0'];
- 
+ 
   const startPort = Number(process.env.PORT) || 5001;
   const maxPortOffset = 20;
- 
+ 
   for (const host of hosts) {
     for (let offset = 0; offset <= maxPortOffset; offset++) {
       const port = startPort + offset;
@@ -175,9 +175,9 @@ const init = async () => {
       try {
         await registerPluginsAndExtensions(server, albumsService, songsService);
         await server.start();
- 
+ 
         console.log(`✅ Server berjalan pada ${server.info.uri}`);
- 
+ 
         const shutdown = async () => {
           console.log('🛑 Stopping server...');
           try {
@@ -191,7 +191,7 @@ const init = async () => {
         };
         process.on('SIGINT', shutdown);
         process.on('SIGTERM', shutdown);
- 
+ 
         return;
       } catch (err) {
         try {
@@ -199,27 +199,27 @@ const init = async () => {
         } catch (_) {
           // ignore
         }
- 
+ 
         if (err && (err.code === 'EACCES' || err.code === 'EADDRINUSE')) {
           console.warn(
             `⚠️  Gagal bind ${host}:${port} — ${err.code}. Mencoba kombinasi host/port lain...`
           );
           continue;
         }
- 
+ 
         console.error('❌ Error saat memulai server:', err);
         throw err;
       }
     }
   }
- 
+ 
   console.error('❌ Gagal memulai server setelah mencoba beberapa host dan port.');
   console.error(
     'Coba jalankan sebagai Administrator, atau ubah HOST ke 127.0.0.1, atau gunakan port lain.'
   );
   process.exit(1);
 };
- 
+ 
 init().catch((err) => {
   console.error('❌ Inisialisasi server gagal:', err);
   process.exit(1);
