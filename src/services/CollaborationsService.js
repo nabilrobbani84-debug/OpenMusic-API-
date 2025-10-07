@@ -20,6 +20,24 @@ class CollaborationsService {
    * @throws {InvariantError} Jika kolaborasi sudah ada.
    * @throws {NotFoundError} Jika Playlist atau User tidak ditemukan (opsional, dapat digantikan dengan Foreign Key Constraint Error di DB).
    */
+
+  async verifyCollaborator(playlistId, userId) {
+    const query = {
+      text: 'SELECT id FROM collaborations WHERE playlist_id = $1 AND user_id = $2',
+      values: [playlistId, userId],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      // Menggunakan InvariantError di sini sesuai dengan logic lama 
+      // atau NotFoundError jika Anda ingin eksplisit bahwa kolaborasi tidak ada.
+      // Karena PlaylistsService menggunakan Invariant/NotFoundError untuk memetakan ke AuthorizationError, 
+      // InvariantError di sini lebih aman (atau buat error custom jika perlu, tapi kita pakai yang sudah ada)
+      throw new InvariantError('Gagal memverifikasi kolaborator. User bukan kolaborator.');
+    }
+  }
+  
   async addCollaboration(playlistId, userId) {
     await this.verifyCollaboratorExistence(playlistId, userId); // Check duplikasi
 

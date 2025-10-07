@@ -7,9 +7,11 @@ const PostUserPayloadSchema = Joi.object({
     .required()
     .min(5)
     .max(50)
-    .pattern(/^[a-z0-9]+$/) // Membatasi hanya huruf kecil dan angka
+    // PERBAIKAN: Memperbolehkan huruf kecil, angka, dan underscore.
+    .pattern(/^[a-z0-9_]+$/)
     .messages({
-      'string.pattern.base': 'username hanya boleh mengandung huruf kecil dan angka',
+      // PERBAIKAN: Mengganti pesan error agar mencakup underscore
+      'string.pattern.base': 'username hanya boleh mengandung huruf kecil, angka, dan underscore',
       'string.min': 'username minimal 5 karakter',
       'string.max': 'username maksimal 50 karakter',
       'any.required': 'username harus diisi',
