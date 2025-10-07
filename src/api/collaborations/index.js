@@ -17,4 +17,4 @@ const collaborations = {
   },
 };
 
-export default collaborations;
+export default collaborations;  
