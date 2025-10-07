@@ -3,16 +3,18 @@ const routes = (handler) => [
   {
     method: 'POST',
     path: '/users',
-    handler: handler.postUserHandler, // Rute untuk registrasi user baru
+    handler: handler.postUserHandler, 
   },
 
   {
     method: 'GET',
     path: '/users/{id}',
     handler: handler.getUserByIdHandler,
-    // Note: Anda mungkin ingin menambahkan auth: 'openmusic_jwt' di sini
+    options: {
+      auth: 'openmusic_jwt', 
+    },
   },
-  
+
 ];
 
 export default routes;
