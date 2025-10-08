@@ -18,8 +18,9 @@ class ActivitiesService {
    * @returns {Promise<void>}
    */
   async addActivity(playlistId, songId, userId, action) {
-    const id = `activity-${Date.now()}`; // Gunakan nanoid di implementasi nyata
-    const time = new Date().toISOString();
+    // PERBAIKAN: Mengganti Date.now() dengan nanoid untuk ID yang lebih unik
+    const id = `activity-${nanoid(16)}`; 
+    const time = new Date().toISOString(); // Biarkan format time dalam ISO
 
     const query = {
       text: 'INSERT INTO playlist_song_activities (id, playlist_id, song_id, user_id, action, time) VALUES ($1, $2, $3, $4, $5, $6)',

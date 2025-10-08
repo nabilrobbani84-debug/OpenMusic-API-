@@ -5,19 +5,17 @@ import Joi from 'joi';
 const PostUserPayloadSchema = Joi.object({
   username: Joi.string()
     .required()
-    .min(5)
-    .max(50)
-    // PERBAIKAN: Memperbolehkan huruf kecil, angka, dan underscore.
+    // .min(5) Dihapus
+    .max(50)  
     .pattern(/^[a-z0-9_]+$/)
     .messages({
       // PERBAIKAN: Mengganti pesan error agar mencakup underscore
       'string.pattern.base': 'username hanya boleh mengandung huruf kecil, angka, dan underscore',
-      'string.min': 'username minimal 5 karakter',
       'string.max': 'username maksimal 50 karakter',
       'any.required': 'username harus diisi',
     }),
-  password: Joi.string().required().min(8).messages({
-    'string.min': 'password minimal 8 karakter',
+  password: Joi.string().required().messages({
+    // 'string.min': 'password minimal 8 karakter', Dihapus
     'any.required': 'password harus diisi',
   }),
   fullname: Joi.string().required().messages({

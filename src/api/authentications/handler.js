@@ -44,13 +44,22 @@ class AuthenticationsHandler {
   }
 
   // PUT /authentications - Refresh Token
-  async putAuthenticationHandler(request, h) {
+   async putAuthenticationHandler(request, h) {
     try {
       this._validator.validatePutAuthenticationPayload(request.payload);
       const { refreshToken } = request.payload;
 
       // 1. Verifikasi Refresh Token (dari JWT)
-      const { userId } = this._tokenManager.verifyRefreshToken(refreshToken); 
+      // PERBAIKAN: Mengambil payload token ke dalam variabel untuk menghindari 
+      // error destructuring jika nilainya undefined atau null.
+      const payload = this._tokenManager.verifyRefreshToken(refreshToken);
+      
+      if (!payload || typeof payload.userId === 'undefined') {
+          // Tambahkan safety check untuk token tanpa userId, jika TokenManager tidak melempar error
+          throw new InvariantError('Refresh token tidak valid');
+      }
+      
+      const { userId } = payload;
       
       // 2. Verifikasi Refresh Token (dari Database)
       await this._authenticationsService.verifyRefreshToken(refreshToken);

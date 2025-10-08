@@ -10,14 +10,10 @@ class UsersHandler {
     autoBind(this);
   }
 
-  async postUserHandler(request, h) {
-    try {
-      // 1. Validasi Payload menggunakan validator yang sudah diimpor
+    async postUserHandler(request, h) {
       this._validator.validateUserPayload(request.payload); 
       
       const { username, password, fullname } = request.payload;
-      
-      // 2. Tambahkan User (Service akan handle cek duplikasi username)
       const userId = await this._service.addUser({ username, password, fullname });
 
       const response = h.response({
@@ -29,17 +25,6 @@ class UsersHandler {
       });
       response.code(201);
       return response;
-    } catch (error) {
-      // 3. Penanganan Error Kustom (InvariantError, dll.)
-      if (error instanceof InvariantError || error instanceof NotFoundError) {
-        // Global error handler di server.js akan menangani ini,
-        // tetapi untuk kepastian dan konsistensi, kita tetap menggunakan try-catch.
-        throw error;
-      }
-
-      // 4. Fallback untuk Server Error (500) - Akan ditangkap Global Handler
-      throw error; 
-    }
   }
   
   async getUserByIdHandler(request, h) {
