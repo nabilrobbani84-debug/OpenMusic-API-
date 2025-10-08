@@ -48,7 +48,7 @@ class ActivitiesService {
           playlist_song_activities ps
         JOIN 
           users u ON ps.user_id = u.id
-        JOIN 
+        LEFT JOIN
           songs s ON ps.song_id = s.id
         WHERE 
           ps.playlist_id = $1

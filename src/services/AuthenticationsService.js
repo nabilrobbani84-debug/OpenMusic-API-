@@ -48,14 +48,21 @@ class AuthenticationsService {
    * Menghapus refresh token dari database (misalnya saat logout).
    * @param {string} token - Refresh token yang akan dihapus.
    * @returns {Promise<void>}
+   * @throws {InvariantError} Jika refresh token tidak ditemukan.
    */
   async deleteRefreshToken(token) {
     const query = {
-      text: 'DELETE FROM authentications WHERE token = $1',
+      // PERBAIKAN: Menggunakan RETURNING untuk mendapatkan rowCount
+      text: 'DELETE FROM authentications WHERE token = $1 RETURNING token', 
       values: [token],
     };
 
-    await this._pool.query(query);
+    const result = await this._pool.query(query);
+
+    // Jika tidak ada baris yang terhapus (token tidak ditemukan), lempar InvariantError
+    if (!result.rowCount) {
+      throw new InvariantError('Refresh token tidak valid');
+    }
   }
 }
 
