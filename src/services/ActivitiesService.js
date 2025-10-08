@@ -1,5 +1,6 @@
 // src/services/ActivitiesService.js
 import { Pool } from 'pg';
+import { nanoid } from 'nanoid'; // Menambahkan import nanoid
 import InvariantError from '../exceptions/InvariantError.js';
 
 class ActivitiesService {

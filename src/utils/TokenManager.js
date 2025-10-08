@@ -19,7 +19,9 @@ const TokenManager = {
       const artifacts = Jwt.token.decode(refreshToken);
       // Kriteria 1: Verifikasi dengan REFRESH_TOKEN_KEY
       Jwt.token.verify(artifacts, process.env.REFRESH_TOKEN_KEY); 
-      return artifacts.payload;
+      
+      // PERBAIKAN: Mengakses artifacts.decoded.payload
+      return artifacts.decoded.payload; 
     } catch (error) {
       // Kriteria 5: Invalid Refresh Token (400 Bad Request)
       throw new InvariantError('Refresh token tidak valid'); 
