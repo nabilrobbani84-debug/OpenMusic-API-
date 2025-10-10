@@ -48,28 +48,52 @@ class PlaylistsHandler {
   }
 
   // POST /playlists
-  async postPlaylistHandler(request, h) {
+  // src/api/playlists/handler.js (Contoh Sederhana untuk postPlaylistSongHandler)
+  async postPlaylistSongHandler(request, h) {
     try {
-      this._validator.validatePlaylistPayload(request.payload);
-      const { name } = request.payload;
-      const { id: owner } = request.auth.credentials; // ID user dari JWT
+      this._validator.validatePostPlaylistSongPayload(request.payload);
+      const { playlistId } = request.params;
+      const { songId } = request.payload;
+      const { id: credentialId } = request.auth.credentials;
 
-      const playlistId = await this._service.addPlaylist({ name, owner });
+      await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
+      const playlistSongId = await this._playlistsService.addSongToPlaylist(playlistId, songId);
+
+      // Logging activity
+      await this._activitiesService.addPlaylistSongActivity({
+        playlistId,
+        songId,
+        userId: credentialId,
+        action: 'add',
+      });
 
       const response = h.response({
         status: 'success',
-        message: 'Playlist berhasil ditambahkan',
+        message: 'Lagu berhasil ditambahkan ke playlist',
         data: {
-          playlistId,
+          playlistSongId,
         },
       });
       response.code(201);
       return response;
     } catch (error) {
-      if (error instanceof InvariantError) {
-        throw error;
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        response.code(error.statusCode);
+        return response;
       }
-      throw error;
+
+      // Server Error
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
     }
   }
 
@@ -151,10 +175,17 @@ class PlaylistsHandler {
 
       // 1. Verifikasi akses ke playlist (owner atau collaborator)
       await this._service.verifyPlaylistAccess(playlistId, userId);
-      
-      // 2. Ambil detail playlist dan lagu-lagunya
-      const playlist = await this._service.getPlaylistSongs(playlistId);
+      await this._playlistsService.verifyPlaylistAccess(playlistId, credentialId);
 
+      // 2. Ambil detail playlist dan lagu-lagunya
+      // const playlist = await this._service.getPlaylistSongs(playlistId);
+      const playlist = await this._playlistsService.getPlaylistSongs(playlistId, credentialId);
+        const response = h.response({
+        status: 'success',
+        data: {
+          playlist,
+        },
+      });
       return {
         status: 'success',
         data: {
