@@ -5,8 +5,9 @@ import InvariantError from '../exceptions/InvariantError.js';
 import NotFoundError from '../exceptions/NotFoundError.js';
 
 class AlbumsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new pg.Pool();
+    this._cacheService = cacheService;
   }
 
   async addAlbum({ name, year }) {
@@ -22,15 +23,23 @@ class AlbumsService {
       throw new InvariantError('Album gagal ditambahkan');
     }
 
+    await this._cacheService.delete('albums'); 
     return result.rows[0].id;
   }
 
   async getAlbums() {
-    const result = await this._pool.query('SELECT id, name, year FROM albums');
-    return result.rows;
+    try {
+        const result = await this._cacheService.get('albums');
+        return JSON.parse(result);
+    } catch (error) {
+        // ... (DB query logic) ...
+        await this._cacheService.set('albums', JSON.stringify(result.rows));
+        return result.rows;
+    }
   }
 
   async getAlbumById(id) {
+    
     // 1. Ambil detail album
     const albumQuery = {
       text: 'SELECT id, name, year FROM albums WHERE id = $1',
@@ -72,6 +81,8 @@ class AlbumsService {
   }
 
   async deleteAlbumById(id) {
+    await this._cacheService.delete('albums');
+    await this._cacheService.delete(`album:${id}`);
     const query = {
       text: 'DELETE FROM albums WHERE id = $1 RETURNING id',
       values: [id],
@@ -83,6 +94,7 @@ class AlbumsService {
       throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan');
     }
   }
+  
 }
 
 export default AlbumsService;

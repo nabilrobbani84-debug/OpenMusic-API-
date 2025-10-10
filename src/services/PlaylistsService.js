@@ -10,6 +10,7 @@ class PlaylistsService {
     this._pool = new Pool();
     this._collaborationService = collaborationService;
     this._activitiesService = activitiesService;
+    this._cacheService = cacheService;
     console.log('PlaylistsService dimuat');
   }
 

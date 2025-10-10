@@ -7,9 +7,13 @@ class AlbumsHandler {
   constructor(service, validator) {
     this._service = service;
     this._validator = validator;
+    this._storageService = storageService;
 
     autoBind(this); 
   }
+
+  
+
 
   async postAlbumHandler(request, h) {
     // Manfaatkan Global Handler di server.js

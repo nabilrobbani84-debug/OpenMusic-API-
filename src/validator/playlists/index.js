@@ -9,6 +9,14 @@ const PlaylistValidator = {
    * @param {object} payload - Data yang akan divalidasi.
    * @throws {InvariantError} Jika payload tidak valid.
    */
+  validatePlaylistExportPayload: (payload) => {
+    const validationResult = PlaylistSchema.PostPlaylistExportPayloadSchema.validate(payload);
+
+    if (validationResult.error) {
+      throw new InvariantError(validationResult.error.message);
+    }
+  },
+  
   validatePlaylistPayload: (payload) => {
     // Memastikan skema untuk PostPlaylistPayloadSchema tersedia
     const validationResult = PlaylistSchema.PostPlaylistPayloadSchema.validate(payload);

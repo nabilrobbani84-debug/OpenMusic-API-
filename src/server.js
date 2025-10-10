@@ -26,7 +26,11 @@ import SongsService from './services/SongsService.js';
 import AlbumValidator from './validator/albums/index.js';
 import SongValidator from './validator/songs/index.js';
 import ClientError from './exceptions/ClientError.js';
- 
+import CacheService from './services/CacheService.js'; 
+import ProducerService from './producer/ProducerService.js'; 
+import StorageService from './utils/StorageService.js'; 
+
+
 const createServerInstance = (host, port) => {
   return Hapi.server({
     host,
@@ -42,7 +46,9 @@ const createServerInstance = (host, port) => {
 const registerPluginsAndExtensions = async (server, albumsService, songsService) => {
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
-  
+  const cacheService = new CacheService();
+  const storageService = new StorageService(process.env.UPLOAD_PATH || './uploads/images');
+
   // Inisialisasi Services yang mendukung Playlists
   const collaborationsService = new CollaborationsService();
   const activitiesService = new ActivitiesService();
@@ -50,9 +56,8 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
   
   // Register JWT Plugin (Kriteria 1)
   await server.register([
-    {
-      plugin: Jwt,
-    }
+    { plugin: Jwt, },
+    { plugin: Inert, },
   ]);
  
   // Definisikan JWT Authentication Strategy (Kriteria 1)
@@ -82,6 +87,7 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
       options: {
         service: albumsService,
         validator: AlbumValidator,
+        storageService,
       },
     },
     {
@@ -89,6 +95,8 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
       options: {
         service: songsService,
         validator: SongValidator,
+        songsService: songsService, 
+        producerService: ProducerService,
       },
     },
     // Ditambahkan: Plugins baru
@@ -157,6 +165,7 @@ const registerPluginsAndExtensions = async (server, albumsService, songsService)
 };
  
 const init = async () => {
+  const cacheService = new CacheService();
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
  

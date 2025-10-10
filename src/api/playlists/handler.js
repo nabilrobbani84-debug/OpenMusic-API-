@@ -5,12 +5,46 @@ import NotFoundError from '../../exceptions/NotFoundError.js';
 import AuthorizationError from '../../exceptions/AuthorizationError.js';
 
 class PlaylistsHandler {
-  constructor(service, validator, songsService) {
+  constructor(service, validator, songsService, producerService) {
     this._service = service;
     this._validator = validator;
     this._songsService = songsService; // Untuk cek eksistensi songId
+    this._producerService = producerService;
 
     autoBind(this);
+  }
+
+  async postPlaylistExportHandler(request, h) {
+    try {
+      this._validator.validatePlaylistExportPayload(request.payload); // Validasi Payload
+      const { playlistId } = request.params;
+      const { targetEmail } = request.payload;
+      const { id: userId } = request.auth.credentials;
+      
+      // Verifikasi akses ke playlist
+      await this._service.verifyPlaylistAccess(playlistId, userId);
+
+      const message = {
+        playlistId,
+        targetEmail,
+      };
+
+      // Kirim pesan ke Message Broker
+      await this._producerService.sendMessage('export:playlists', message); 
+
+      const response = h.response({
+        status: 'success',
+        message: 'Permintaan Anda sedang kami proses',
+      });
+      response.code(201);
+      return response;
+
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof AuthorizationError || error instanceof InvariantError) {
+        throw error;
+      }
+      throw error;
+    }
   }
 
   // POST /playlists

@@ -7,12 +7,24 @@ const routes = (handler) => [
   },
   {
     method: 'GET',
-    path: '/albums',
-    handler: handler.getAlbumsHandler,
+    path: '/albums/covers/{param*}',
+    handler: {
+      directory: {
+        path: path.resolve(process.env.UPLOAD_PATH || './uploads/images'),
+      },
+    },
   },
   {
     method: 'GET',
-    path: '/albums/{id}',
+    path: '/albums/{id}/covers',
+    options: {
+      payload: {
+        allow: 'multipart/form-data',
+        multipart: true,
+        output: 'stream',
+        maxBytes: 512000, // Max 512KB
+      },
+    },
     handler: handler.getAlbumByIdHandler,
   },
   {
